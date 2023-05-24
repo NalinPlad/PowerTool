@@ -1,3 +1,3 @@
 <div class="m-1 text-2xl">
-  PowerTool v0.3
+  PowerTool V0.3 by notmysql
 </div>
