@@ -46,7 +46,7 @@
   <main class="m-5">
     <form class="my-5 flex" preventDefault>
       <div class="flex flex-col bg-blue-100 p-3 w-fit rounded-md">
-        <label for="pf" class="text-sm m-1 underline">Click here to upload your PowerSchool file</label>
+        <label for="pf" class="text-sm m-1 underline">Click here to add your PowerSchool file</label>
         <input
           accept="text/html"
           bind:files
