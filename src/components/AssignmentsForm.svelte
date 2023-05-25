@@ -1,23 +1,133 @@
 <script>
+  import { onMount } from "svelte";
+
+  // onMount(async () => {
+  //   const file_sample = await fetch("/sample.html");
+  //   const file_data = await file_sample.blob();
+  //   files = file_data;
+  // });
+
   let files;
+  // let files = fetch("/sample.txt");
+  // for debugging, set file to a sample file 'sample.html' using file api
+  // let file = new File([""], "sample.html", {type: "text/html"});
+
+  let file_content = localStorage.getItem("file_content")
+    ? localStorage.getItem("file_content")
+    : "";
+  let table_json = localStorage.getItem("table_json")
+    ? JSON.parse(localStorage.getItem("table_json"))
+    : [];
+  let headers = localStorage.getItem("headers")
+    ? JSON.parse(localStorage.getItem("headers"))
+    : [];
+
   let showHelp = false;
 
   const toggleHelp = () => {
     showHelp = !showHelp;
   };
 
+  const process_content = () => {}
+
+  const process = () => {
+    console.log(files);
+    if (files) {
+      const reader = new FileReader();
+      // console.log(files[0]);
+      reader.addEventListener(
+        "load",
+        () => {
+          file_content = reader.result;
+          localStorage.setItem("file_content", file_content);
+          const parser = new DOMParser();
+          const html_doc = parser.parseFromString(file_content, "text/html");
+          const table = html_doc.querySelector("#scoreTable");
+
+          // Convert table to JSON, remember that the Flags section has 5 columns in the table
+          headers = [];
+          for (const header of table.querySelectorAll("thead tr th")) {
+            // if Flags, add 5 columns [collected, late, missing, exempt from final grade, absent, incomplete, excluded from final grade]
+            if (
+              header.textContent.replace(/^\s+|\s+$|\s+(?=\s)/g, "") === "Flags"
+            ) {
+              headers.push(
+                "collected",
+                "late",
+                "missing",
+                "exempt from final grade",
+                "absent",
+                "incomplete",
+                "excluded from final grade"
+              );
+              continue;
+            }
+            headers.push(
+              header.textContent.replace(/^\s+|\s+$|\s+(?=\s)/g, "")
+            );
+          }
+
+          // console.log(headers);
+          table_json = [];
+          for (const row of table.querySelectorAll("tbody tr")) {
+            const row_json = {};
+            for (const [i, cell] of row.querySelectorAll("td").entries()) {
+              // strip all newlines and white space(not including spaces between words)
+              row_json[headers[i]] = cell.textContent.replace(
+                /^\s+|\s+$|\s+(?=\s)/g,
+                ""
+              );
+            }
+            table_json.push(row_json);
+          }
+
+          // filter out any flag columns and comments column
+          table_json = table_json.map((row) => {
+            const row_json = {};
+            for (const header of headers) {
+              if (
+                header === "collected" ||
+                header === "late" ||
+                header === "missing" ||
+                header === "exempt from final grade" ||
+                header === "absent" ||
+                header === "incomplete" ||
+                header === "excluded from final grade" ||
+                header === "View comments and descriptions" ||
+                header === "Category"
+              ) {
+                continue;
+              }
+              row_json[header] = row[header];
+            }
+            return row_json;
+          });
+
+          // remove last row (last updated) and assign the date to variable instead
+          let last_row = table_json.pop();
+
+          localStorage.setItem("headers", JSON.stringify(headers));
+          localStorage.setItem("table_json", JSON.stringify(table_json));
+          // console.log(table_json);
+        },
+        false
+      );
+      reader.readAsText(files[0]);
+    }
+  };
+
   $: if (files) {
     // Note that `files` is of type `FileList`, not an Array:
     // https://developer.mozilla.org/en-US/docs/Web/API/FileList
-    console.log(files);
+    // console.log(files);
 
     for (const file of files) {
-      console.log(`${file.name}: ${file.size} bytes`);
+      // console.log(`${file.name}: ${file.size} bytes`);
     }
   }
 </script>
 
-<div class="">
+<div class="overflow-hidden">
   <header class="bg-slate-50 p-5 w-screen rounded-lg">
     <div class="text-2xl">
       PowerTool v0.3 by <span class="text-blue-900 tracking-wide">notmysql</span
@@ -28,25 +138,27 @@
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <h1
         on:click={toggleHelp}
-        class="my-1 bg-slate-200 w-fit p-1 px-2 hover:bg-slate-300 hover:scale-105 transition-all cursor-default rounded-md italic text-slate-900"
+        class="my-1 bg-slate-200 w-fit p-1 px-2 hover:bg-slate-300 hover:scale-105 transition-all cursor-default rounded-md italic text-slate-900 shadow select-none"
       >
-        How to use PowerTool 🤔
+        How to use PowerTool <span class="not-italic">🤔</span>
       </h1>
       {#if showHelp}
         <p
           class="text-slate-800 bg-amber-100 w-fit p-3 rounded-md before:content-['->'] before:text-slate-500 before:px-3"
         >
-          To get your PowerSchool file, log into PowerSchool, right click on the
-          page and select <code class="bg-slate-100 p-1 text-sm">Save As</code>
+          To get your PowerSchool file, log into PowerSchool navigate to your class, and right click on the
+          page and select <code class="bg-slate-100 p-1 text-sm shadow-sm">Save As</code>
         </p>
       {/if}
     </div>
   </header>
 
-  <main class="m-5">
-    <form class="my-5 flex" preventDefault>
+  <main class="p-5 w-fit m-0">
+    <section class="my-5 flex items-center" preventDefault>
       <div class="flex flex-col bg-blue-100 p-3 w-fit rounded-md">
-        <label for="pf" class="text-sm m-1 underline">Click here to add your PowerSchool file</label>
+        <label for="pf" class="text-sm m-1 underline"
+          >Click here to add your PowerSchool file</label
+        >
         <input
           accept="text/html"
           bind:files
@@ -63,8 +175,41 @@
       </div>
 
       {#if files}
-        <button class="mx-2 bg-green-100 p-3 rounded-md transition-all">😎 Process →</button>
+        <button
+          class="mx-2 bg-green-100 p-3 rounded-md transition-all h-fit hover:scale-105"
+          on:click={process}>😎 Process →</button
+        >
       {/if}
-    </form>
+    </section>
+    {#if file_content}
+      <!-- make table with table header and table content -->
+      <table class="table-auto">
+        <thead>
+          <tr>
+            {#each Object.keys(table_json[0]) as header}
+              <th class="">{header}</th>
+            {/each}
+          </tr>
+        </thead>
+        <tbody>
+          {#each table_json as row}
+            <tr>
+              {#each Object.values(row) as cell}
+                <td class="">{cell}</td>
+              {/each}
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+
+      
+      <!-- <p>{last_row}</p> -->
+    {/if}
   </main>
 </div>
+
+<style>
+  table,th,td {
+    @apply border border-slate-900 p-2 px-3 rounded-md;
+  }
+</style>
