@@ -23,6 +23,11 @@
     ? JSON.parse(localStorage.getItem("headers"))
     : [];
 
+  // class json is the class grade and percent
+  let class_json = localStorage.getItem("class_json")
+    ? JSON.parse(localStorage.getItem("class_json"))
+    : [];
+
   let showHelp = false;
 
   const toggleHelp = () => {
@@ -30,9 +35,39 @@
   };
 
   const process_content = () => {};
+  
+  const percent_to_letter_grade = (percent) => {
+    if (percent >= 97) {
+      return "A+";
+    } else if (percent >= 93) {
+      return "A";
+    } else if (percent >= 90) {
+      return "A-";
+    } else if (percent >= 87) {
+      return "B+";
+    } else if (percent >= 83) {
+      return "B";
+    } else if (percent >= 80) {
+      return "B-";
+    } else if (percent >= 77) {
+      return "C+";
+    } else if (percent >= 73) {
+      return "C";
+    } else if (percent >= 70) {
+      return "C-";
+    } else if (percent >= 67) {
+      return "D+";
+    } else if (percent >= 63) {
+      return "D";
+    } else if (percent >= 60) {
+      return "D-";
+    } else {
+      return "F";
+    }
+  };
 
   const update_percent_and_grade = () => {
-    console.log("hello")
+    console.log("hello");
     console.table(table_json);
     // calculate the percentage column based on the score and points columns and validate the calculate against the original percentage column
     table_json = table_json.map((row) => {
@@ -40,8 +75,16 @@
       for (const header of Object.keys(row)) {
         if (header === "%") {
           // round to nearest hundredth
-          // const percentage = (row["score"] / row["points"]) * 100;
-          const percentage = Math.round((row["score"] / row["points"]) * 10000) / 100;
+          let percentage =
+            Math.round((row["score"] / row["points"]) * 10000) / 100;
+
+            if(isNaN(percentage)) {
+              percentage = 0;
+            }
+
+            if(!isFinite(percentage)) {
+              percentage = "undefined";
+            }
 
           // if (percentage !== parseFloat(row[header])) {
           //   console.log(
@@ -53,48 +96,49 @@
         }
         row_json[header] = row[header];
       }
+      // calculat class grade and percentage
+      let total_points = 0;
+      let total_score = 0;
+      for (const row of table_json) {
+        total_points += row["points"];
+        total_score += row["score"];
+      }
+      class_json = {
+        "Total Points": Math.round(total_points*100)/100,
+        "Total Score": Math.round(total_score*100)/100,
+        "%": Math.round((total_score / total_points) * 10000) / 100,
+        "Grade": percent_to_letter_grade(Math.round((total_score / total_points) * 10000) / 100)
+      };
+      console.log(class_json)
       return row_json;
     });
-
+    
     //calculate the letter grade from the percentage column (ew fix this please it was generated)
     table_json = table_json.map((row) => {
       const row_json = {};
       for (const header of Object.keys(row)) {
         if (header === "Grade") {
           const percentage = row["%"];
-          if (percentage >= 97) {
-            row_json["Grade"] = "A+";
-          } else if (percentage >= 93) {
-            row_json["Grade"] = "A";
-          } else if (percentage >= 90) {
-            row_json["Grade"] = "A-";
-          } else if (percentage >= 87) {
-            row_json["Grade"] = "B+";
-          } else if (percentage >= 83) {
-            row_json["Grade"] = "B";
-          } else if (percentage >= 80) {
-            row_json["Grade"] = "B-";
-          } else if (percentage >= 77) {
-            row_json["Grade"] = "C+";
-          } else if (percentage >= 73) {
-            row_json["Grade"] = "C";
-          } else if (percentage >= 70) {
-            row_json["Grade"] = "C-";
-          } else if (percentage >= 67) {
-            row_json["Grade"] = "D+";
-          } else if (percentage >= 63) {
-            row_json["Grade"] = "D";
-          } else if (percentage >= 60) {
-            row_json["Grade"] = "D-";
-          } else {
-            row_json["Grade"] = "F";
-          }
-          continue;
+          row_json["Grade"] = percent_to_letter_grade(percentage);
         }
         row_json[header] = row[header];
       }
       return row_json;
     });
+  }
+
+
+  const newAssignment = () => {
+    table_json.push({
+      "Due Date": "",
+      Assignment: "New Assignment",
+      score: 0,
+      points: 0,
+      "%": 0,
+      Grade: "F",
+    });
+    update_percent_and_grade();
+    console.log(table_json);
   };
 
   const process = () => {
@@ -205,6 +249,7 @@
 
           localStorage.setItem("headers", JSON.stringify(headers));
           localStorage.setItem("table_json", JSON.stringify(table_json));
+          localStorage.setItem("class_json", JSON.stringify(class_json));
           // console.log(table_json);
         },
         false
@@ -214,6 +259,9 @@
       console.log(table_json);
     }
   };
+
+
+  update_percent_and_grade();
 
   $: if (files) {
     // Note that `files` is of type `FileList`, not an Array:
@@ -283,8 +331,26 @@
       {/if}
     </section>
     {#if file_content}
-      <!-- make table with table header and table content -->
-      <table class="table-auto">
+      <!-- table with class totals-->
+      <table class="table auto">
+        <thead>
+          <tr>
+            {#each Object.keys(class_json) as header}
+              <th class="">{header}</th>
+            {/each}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            {#each Object.values(class_json) as cell}
+              <td class="">{cell}</td>
+            {/each}
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- table with table header and table content -->
+      <table class="table-auto my-2">
         <thead>
           <tr>
             {#each Object.keys(table_json[0]) as header}
@@ -317,6 +383,8 @@
                       on:input={update_percent_and_grade}
                     /></td
                   >
+                {:else if Object.keys(table_json[0])[i] === "Assignment"}
+                  <td contenteditable="true">{cell}</td>
                 {:else if Object.keys(table_json[0])[i] === "%"}
                   <td class="flex">
                     {table_json[i1]["%"]}
@@ -329,6 +397,10 @@
           {/each}
         </tbody>
       </table>
+      <button
+        class="bg-slate-200 p-1 my-1 rounded-sm shadow-md"
+        on:click={newAssignment}>Add assignment</button
+      >
 
       <!-- <p>{last_row}</p> -->
     {/if}
