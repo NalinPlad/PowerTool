@@ -1,5 +1,6 @@
 <script>
   import { onMount } from "svelte";
+  import { bind } from "svelte/internal";
 
   // onMount(async () => {
   //   const file_sample = await fetch("/sample.html");
@@ -28,7 +29,72 @@
     showHelp = !showHelp;
   };
 
-  const process_content = () => {}
+  const process_content = () => {};
+
+  const update_percent_and_grade = () => {
+    console.log("hello")
+    console.table(table_json);
+    // calculate the percentage column based on the score and points columns and validate the calculate against the original percentage column
+    table_json = table_json.map((row) => {
+      const row_json = {};
+      for (const header of Object.keys(row)) {
+        if (header === "%") {
+          // round to nearest hundredth
+          // const percentage = (row["score"] / row["points"]) * 100;
+          const percentage = Math.round((row["score"] / row["points"]) * 10000) / 100;
+          if (percentage !== parseFloat(row[header])) {
+            console.log(
+              `Error: Calculated percentage ${percentage} does not match original percentage ${row[header]}`
+            );
+          }
+          row_json["%"] = percentage;
+          continue;
+        }
+        row_json[header] = row[header];
+      }
+      return row_json;
+    });
+
+    //calculate the letter grade from the percentage column (ew fix this please it was generated)
+    table_json = table_json.map((row) => {
+      const row_json = {};
+      for (const header of Object.keys(row)) {
+        if (header === "Grade") {
+          const percentage = row["%"];
+          if (percentage >= 97) {
+            row_json["Grade"] = "A+";
+          } else if (percentage >= 93) {
+            row_json["Grade"] = "A";
+          } else if (percentage >= 90) {
+            row_json["Grade"] = "A-";
+          } else if (percentage >= 87) {
+            row_json["Grade"] = "B+";
+          } else if (percentage >= 83) {
+            row_json["Grade"] = "B";
+          } else if (percentage >= 80) {
+            row_json["Grade"] = "B-";
+          } else if (percentage >= 77) {
+            row_json["Grade"] = "C+";
+          } else if (percentage >= 73) {
+            row_json["Grade"] = "C";
+          } else if (percentage >= 70) {
+            row_json["Grade"] = "C-";
+          } else if (percentage >= 67) {
+            row_json["Grade"] = "D+";
+          } else if (percentage >= 63) {
+            row_json["Grade"] = "D";
+          } else if (percentage >= 60) {
+            row_json["Grade"] = "D-";
+          } else {
+            row_json["Grade"] = "F";
+          }
+          continue;
+        }
+        row_json[header] = row[header];
+      }
+      return row_json;
+    });
+  };
 
   const process = () => {
     console.log(files);
@@ -106,6 +172,36 @@
           // remove last row (last updated) and assign the date to variable instead
           let last_row = table_json.pop();
 
+          // parse the score column [score/points] and assign the values to two new columns, score and points
+          table_json = table_json.map((row) => {
+            const row_json = {};
+            for (const header of Object.keys(row)) {
+              if (header === "Score") {
+                const score = row[header].split("/");
+                row_json["score"] = score[0];
+                row_json["points"] = score[1];
+                continue;
+              }
+              row_json[header] = row[header];
+            }
+            return row_json;
+          });
+
+          // convert the score / points columns to json numbers instead of strings
+          table_json = table_json.map((row) => {
+            const row_json = {};
+            for (const header of Object.keys(row)) {
+              if (header === "score" || header === "points") {
+                row_json[header] = Number(row[header]);
+                continue;
+              }
+              row_json[header] = row[header];
+            }
+            return row_json;
+          });
+
+          update_percent_and_grade();
+
           localStorage.setItem("headers", JSON.stringify(headers));
           localStorage.setItem("table_json", JSON.stringify(table_json));
           // console.log(table_json);
@@ -113,6 +209,8 @@
         false
       );
       reader.readAsText(files[0]);
+
+      console.log(table_json);
     }
   };
 
@@ -146,8 +244,10 @@
         <p
           class="text-slate-800 bg-amber-100 w-fit p-3 rounded-md before:content-['->'] before:text-slate-500 before:px-3"
         >
-          To get your PowerSchool file, log into PowerSchool navigate to your class, and right click on the
-          page and select <code class="bg-slate-100 p-1 text-sm shadow-sm">Save As</code>
+          To get your PowerSchool file, log into PowerSchool navigate to your
+          class, and right click on the page and select <code
+            class="bg-slate-100 p-1 text-sm shadow-sm">Save As</code
+          >
         </p>
       {/if}
     </div>
@@ -155,9 +255,9 @@
 
   <main class="p-5 w-fit m-0">
     <section class="my-5 flex items-center" preventDefault>
-      <div class="flex flex-col bg-blue-100 p-3 w-fit rounded-md">
+      <div class="flex flex-col bg-blue-100 p-2 w-fit rounded-md shadow-sm">
         <label for="pf" class="text-sm m-1 underline"
-          >Click here to add your PowerSchool file</label
+          >Click here to add a new PowerSchool file</label
         >
         <input
           accept="text/html"
@@ -176,7 +276,7 @@
 
       {#if files}
         <button
-          class="mx-2 bg-green-100 p-3 rounded-md transition-all h-fit hover:scale-105"
+          class="mx-2 bg-green-100 p-3 rounded-md transition-all h-fit hover:scale-105 shadow-sm"
           on:click={process}>😎 Process →</button
         >
       {/if}
@@ -192,24 +292,103 @@
           </tr>
         </thead>
         <tbody>
-          {#each table_json as row}
+          {#each table_json as row, i1 (i1)}
             <tr>
-              {#each Object.values(row) as cell}
-                <td class="">{cell}</td>
+              {#each Object.values(row) as cell, i (i)}
+                <!-- if the column is score, make it an input -->
+                {#if Object.keys(table_json[0])[i] === "score"}
+                  <td class="flex"
+                    ><input
+                      type="number"
+                      class=" mx-1 w-20"
+                      bind:value={table_json[i1]["score"]}
+                      on:input={update_percent_and_grade}
+                    /></td
+                  >
+                {:else if Object.keys(table_json[0])[i] === "points"}
+                  <td class=""
+                    ><input
+                      type="number"
+                      class=" mx-1 w-20"
+                      bind:value={table_json[i1]["points"]}
+                      on:input={update_percent_and_grade}
+                    /></td
+                  >
+                {:else if Object.keys(table_json[0])[i] === "%"}
+                  <td class="flex">
+                    {table_json[i1]["%"]}
+                  </td>
+                {:else}
+                  <td class="">{cell}</td>
+                {/if}
               {/each}
             </tr>
           {/each}
         </tbody>
       </table>
 
-      
       <!-- <p>{last_row}</p> -->
     {/if}
   </main>
 </div>
 
 <style>
-  table,th,td {
-    @apply border border-slate-900 p-2 px-3 rounded-md;
+  th,
+  tr,
+  td {
+    @apply px-2 py-[5px];
+  }
+
+  table {
+    border: 1px solid #ddd;
+    border-collapse: separate;
+    border-left: 0;
+    border-radius: 4px;
+    border-spacing: 0px;
+  }
+
+  thead {
+    display: table-header-group;
+    vertical-align: middle;
+    border-color: inherit;
+    border-collapse: separate;
+    border-bottom: 2px solid #ddd;
+  }
+
+  tr {
+    display: table-row;
+    vertical-align: inherit;
+    border-color: inherit;
+    padding: 5px;
+  }
+
+  tr:nth-child(odd) {
+    background-color: #f9f9f9;
+  }
+
+  th {
+    border-bottom: 1px solid #ddd;
+  }
+
+  th,
+  td {
+    /* padding: 5px 4px 6px 4px; */
+    text-align: left;
+    vertical-align: top;
+    border-left: 1px solid #ddd;
+  }
+
+  td {
+    /* border-top: 1px solid #dddddd83; */
+  }
+
+  thead:first-child tr:first-child th:first-child,
+  tbody:first-child tr:first-child td:first-child {
+    border-radius: 4px 0 0 0;
+  }
+
+  thead:last-child tr:last-child th:first-child,
+  tbody:last-child tr:last-child td:first-child {
+    border-radius: 0 0 0 4px;
   }
 </style>
