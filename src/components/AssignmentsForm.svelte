@@ -42,7 +42,7 @@
           // round to nearest hundredth
           // const percentage = (row["score"] / row["points"]) * 100;
           const percentage = Math.round((row["score"] / row["points"]) * 10000) / 100;
-          
+
           // if (percentage !== parseFloat(row[header])) {
           //   console.log(
           //     `Error: Calculated percentage ${percentage} does not match original percentage ${row[header]}`
@@ -245,7 +245,7 @@
         <p
           class="text-slate-800 bg-amber-100 w-fit p-3 rounded-md before:content-['->'] before:text-slate-500 before:px-3"
         >
-          To get your PowerSchool file, log into PowerSchool navigate to your
+          To get your PowerSchool file, log into PowerSchool, navigate to your
           class, and right click on the page and select <code
             class="bg-slate-100 p-1 text-sm shadow-sm">Save As</code
           >
