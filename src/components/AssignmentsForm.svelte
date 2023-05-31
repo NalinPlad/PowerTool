@@ -42,11 +42,12 @@
           // round to nearest hundredth
           // const percentage = (row["score"] / row["points"]) * 100;
           const percentage = Math.round((row["score"] / row["points"]) * 10000) / 100;
-          if (percentage !== parseFloat(row[header])) {
-            console.log(
-              `Error: Calculated percentage ${percentage} does not match original percentage ${row[header]}`
-            );
-          }
+          
+          // if (percentage !== parseFloat(row[header])) {
+          //   console.log(
+          //     `Error: Calculated percentage ${percentage} does not match original percentage ${row[header]}`
+          //   );
+          // }
           row_json["%"] = percentage;
           continue;
         }
@@ -302,6 +303,7 @@
                       type="number"
                       class=" mx-1 w-20"
                       bind:value={table_json[i1]["score"]}
+                      step="0.01"
                       on:input={update_percent_and_grade}
                     /></td
                   >
@@ -311,6 +313,7 @@
                       type="number"
                       class=" mx-1 w-20"
                       bind:value={table_json[i1]["points"]}
+                      step="0.01"
                       on:input={update_percent_and_grade}
                     /></td
                   >
