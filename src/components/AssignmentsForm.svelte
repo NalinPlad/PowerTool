@@ -35,7 +35,7 @@
   };
 
   const process_content = () => {};
-  
+
   const percent_to_letter_grade = (percent) => {
     if (percent >= 97) {
       return "A+";
@@ -78,13 +78,13 @@
           let percentage =
             Math.round((row["score"] / row["points"]) * 10000) / 100;
 
-            if(isNaN(percentage)) {
-              percentage = 0;
-            }
+          if (isNaN(percentage)) {
+            percentage = 0;
+          }
 
-            if(!isFinite(percentage)) {
-              percentage = "undefined";
-            }
+          if (!isFinite(percentage)) {
+            percentage = "undefined";
+          }
 
           // if (percentage !== parseFloat(row[header])) {
           //   console.log(
@@ -104,15 +104,17 @@
         total_score += row["score"];
       }
       class_json = {
-        "Total Points": Math.round(total_points*100)/100,
-        "Total Score": Math.round(total_score*100)/100,
+        "Total Points": Math.round(total_points * 100) / 100,
+        "Total Score": Math.round(total_score * 100) / 100,
         "%": Math.round((total_score / total_points) * 10000) / 100,
-        "Grade": percent_to_letter_grade(Math.round((total_score / total_points) * 10000) / 100)
+        Grade: percent_to_letter_grade(
+          Math.round((total_score / total_points) * 10000) / 100
+        ),
       };
-      console.log(class_json)
+      console.log(class_json);
       return row_json;
     });
-    
+
     //calculate the letter grade from the percentage column (ew fix this please it was generated)
     table_json = table_json.map((row) => {
       const row_json = {};
@@ -125,8 +127,9 @@
       }
       return row_json;
     });
-  }
-
+    localStorage.setItem("table_json", JSON.stringify(table_json));
+    localStorage.setItem("class_json", JSON.stringify(class_json));
+  };
 
   const newAssignment = () => {
     table_json.push({
@@ -260,7 +263,6 @@
     }
   };
 
-
   update_percent_and_grade();
 
   $: if (files) {
@@ -369,7 +371,7 @@
                       type="number"
                       class=" mx-1 w-20"
                       bind:value={table_json[i1]["score"]}
-                      step="0.01"
+                      step="1"
                       on:input={update_percent_and_grade}
                     /></td
                   >
@@ -379,7 +381,7 @@
                       type="number"
                       class=" mx-1 w-20"
                       bind:value={table_json[i1]["points"]}
-                      step="0.01"
+                      step="1"
                       on:input={update_percent_and_grade}
                     /></td
                   >
