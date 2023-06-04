@@ -29,9 +29,14 @@
     : [];
 
   let showHelp = false;
+  let showVideo = false;
 
   const toggleHelp = () => {
     showHelp = !showHelp;
+  };
+
+  const toggleVideo = () => {
+    showVideo = !showVideo;
   };
 
   const process_content = () => {};
@@ -292,14 +297,22 @@
         How to use PowerTool <span class="not-italic">🤔</span>
       </h1>
       {#if showHelp}
-        <p
+        <div
           class="text-slate-800 bg-amber-100 w-fit p-3 rounded-md before:content-['->'] before:text-slate-500 before:px-3"
         >
           To get your PowerSchool file, log into PowerSchool, navigate to your
           class, and right click on the page and select <code
             class="bg-slate-100 p-1 text-sm shadow-sm">Save As</code
           >
-        </p>
+          <p on:click={toggleVideo} class="my-2 before:content-['->'] before:text-slate-500 before:px-3"><span class="bg-amber-200 p-1 rounded-sm shadow-sm">Video Example →</span></p>
+          {#if showVideo}
+            <video controls class="rounded-sm mx-3 shadow-lg my-2" width="500">
+              <source src="../public/PowerToolHowTo.mp4" type="video/mp4" />
+              <track kind="captions" />
+              Your browser does not support the video tag.
+            </video>
+          {/if}
+          </div>
       {/if}
     </div>
   </header>
