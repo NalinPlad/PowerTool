@@ -166,7 +166,7 @@
           // Convert table to JSON, remember that the Flags section has 5 columns in the table
           headers = [];
           for (const header of table.querySelectorAll("thead tr th")) {
-            // if Flags, add 5 columns [collected, late, missing, exempt from final grade, absent, incomplete, excluded from final grade]
+            // if we have Flags, add 5 columns [collected, late, missing, exempt from final grade, absent, incomplete, excluded from final grade]
             if (
               header.textContent.replace(/^\s+|\s+$|\s+(?=\s)/g, "") === "Flags"
             ) {
