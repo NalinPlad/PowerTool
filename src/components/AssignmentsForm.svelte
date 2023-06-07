@@ -284,7 +284,7 @@
 <div class="overflow-hidden">
   <header class="bg-slate-50 p-5 w-screen rounded-lg">
     <div class="text-2xl">
-      PowerTool v0.3 by <span class="text-blue-900 tracking-wide">notmysql</span
+      PowerTool v1.2 by <span class="text-blue-900 tracking-wide">notmysql</span
       >
     </div>
 
