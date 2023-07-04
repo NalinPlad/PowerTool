@@ -167,7 +167,7 @@
           const html_doc = parser.parseFromString(file_content, "text/html");
           const table = html_doc.querySelector("#scoreTable");
 
-          // Convert table to JSON, remember that the Flags section has 5 columns in the table
+          // Convert table to JSON, Flags section has 5 columns in the table
           headers = [];
           for (const header of table.querySelectorAll("thead tr th")) {
             // if we have Flags, add 5 columns [collected, late, missing, exempt from final grade, absent, incomplete, excluded from final grade]
